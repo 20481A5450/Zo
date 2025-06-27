@@ -1,0 +1,103 @@
+/* Global box-sizing */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Body and main container styling */
+body,
+main {
+  margin: 0;
+  padding: 0;
+  min-width: 100%;
+  min-height: 100vh;
+  font-family: sans-serif;
+  text-align: center;
+  color: #fff;
+  background: #000;
+}
+
+/* Styling for the "start" button */
+button {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5em;
+  height: 2em;
+  margin-left: -2.5em; /* Center horizontally */
+  margin-top: -1em; /* Center vertically */
+  z-index: 100; /* Ensure it's above other elements */
+  padding: .25em .5em;
+  color: #fff;
+  background: #000;
+  border: 1px solid #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.15em;
+  font-weight: 200;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  transition: box-shadow .5s;
+}
+
+button:hover {
+  box-shadow: 0 0 30px 5px rgba(255, 255, 255, 0.75);
+}
+
+/* Active state for the button (custom class added by JS) */
+button.active {
+    background: #9c27b0; /* Purple when active/listening */
+    border-color: #9c27b0;
+    box-shadow: 0 0 20px rgba(156, 39, 176, 0.7);
+    animation: pulse-active 1.5s infinite; /* Pulsing animation */
+}
+
+@keyframes pulse-active {
+    0% { box-shadow: 0 0 0 0 rgba(156, 39, 176, 0.7); transform: scale(1); }
+    70% { box-shadow: 0 0 0 25px rgba(156, 39, 176, 0); transform: scale(1.08); }
+    100% { box-shadow: 0 0 0 0 rgba(156, 39, 176, 0); transform: scale(1); }
+}
+
+/* Styling for the main visualizer area */
+main {
+  position: relative;
+  display: flex; /* Use flexbox to arrange visual elements */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+}
+
+/* Styling for individual bar elements within the visualizer */
+main>div {
+  display: inline-block;
+  width: 2px; /* Width of each bar */
+  height: 100px; /* Base height of each bar */
+  margin: 0 8px; /* Spacing between bars - increased from 7px */
+  background: currentColor; /* Inherits color from parent (main) */
+  transform: scaleY(0); /* Modified: Start hidden by default */
+  opacity: 0; /* Modified: Start invisible by default */
+  transition: transform 0.1s linear, opacity 0.1s linear; /* Smooth bar transitions */
+}
+
+/* Error state styling for the main visualizer */
+main.error {
+  color: #f7451d; /* Red color for errors */
+  min-width: 20em;
+  max-width: 30em;
+  margin: 0 auto;
+  white-space: pre-line; /* Preserve line breaks in error message */
+}
+
+/* Styling for the transcription display */
+#transcript {
+  position: fixed; /* Fixed position relative to viewport */
+  bottom: 10%; /* Positioned from the bottom */
+  left: 0; /* Align to the left edge */
+  width: 100%; /* Full width */
+  padding: 1em; /* Add some padding */
+  color: #fff; /* Explicitly set white color */
+  font-size: 1.5em; /* A bit larger font */
+  text-align: center; /* Ensure text is centered */
+  z-index: 200; /* Ensure it's above the visualizer and button */
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background for visibility */
+  pointer-events: none; /* Make sure it doesn't capture mouse events */
+}
