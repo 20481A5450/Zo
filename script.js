@@ -8,7 +8,16 @@ let audioContext;
 let analyser;
 let mediaStreamSource;
 let visualElements; // Stores references to the created div elements for bars
-const visualValueCount = 32; // Number of bars
+let visualValueCount;
+if (/Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent)) {
+    // Mobile device detected
+    visualValueCount = 16;
+} else {
+    // Desktop or other device: set bars to nearest multiple of 16 based on screen width
+    // For example, 1 bar per 40px of width, minimum 16 bars
+    const bars = Math.max(16, Math.round(window.innerWidth / 40));
+    visualValueCount = Math.ceil(bars / 16) * 16;
+}
 
 // --- Web Speech API Variables for STT ---
 let recognition; // SpeechRecognition object for STT

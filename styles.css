@@ -90,7 +90,7 @@ main.error {
 /* Styling for the transcription display */
 #transcript {
   position: fixed; /* Fixed position relative to viewport */
-  bottom: 10%; /* Positioned from the bottom */
+  bottom: 35%; /* Positioned from the bottom */
   left: 0; /* Align to the left edge */
   width: 100%; /* Full width */
   padding: 1em; /* Add some padding */
