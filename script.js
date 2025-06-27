@@ -15,8 +15,7 @@ if (/Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigato
 } else {
     // Desktop or other device: set bars to nearest multiple of 16 based on screen width
     // For example, 1 bar per 40px of width, minimum 16 bars
-    const bars = Math.max(16, Math.round(window.innerWidth / 40));
-    visualValueCount = Math.ceil(bars / 16) * 16;
+    visualValueCount = 32;
 }
 
 // --- Web Speech API Variables for STT ---
@@ -25,6 +24,9 @@ let recognition; // SpeechRecognition object for STT
 // --- State Management ---
 let isListeningForSTT = false; // Is SpeechRecognition active?
 let isVisualizerActive = false; // Is the microphone connected for visualizer?
+let sttFinalTranscript = ''; // Accumulates final transcript for sending to backend
+let sttPauseTimer = null; // Timer to detect pause in speech
+const sttPauseDuration = 1500; // 1.5 seconds pause before sending to backend
 
 
 // --- UI Utility Functions ---
@@ -48,6 +50,50 @@ function toggleMicButtonState(active) {
   } else {
     microphoneButton.classList.remove('active'); // Remove active animation
     microphoneButton.textContent = 'start'; // Change button text back to start
+  }
+}
+
+
+// --- Backend API Communication ---
+
+/**
+ * Sends the transcribed text to the backend API and displays the response.
+ * @param {string} text - The text to send to the backend.
+ */
+async function sendToBackend(text) {
+  if (!text || text.trim() === '') {
+    return; // Don't send empty strings
+  }
+
+  setTranscript("Thinking..."); // Let the user know something is happening
+
+  try {
+    const response = await fetch('https://shaikzo-zo.hf.space/query', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        input: text,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    
+    // Assuming the API returns a dictionary with a 'response' key
+    if (result && result.response) {
+      setTranscript(result.response); // Display the AI's response
+    } else {
+        setTranscript("Sorry, I didn't get a valid response.");
+    }
+
+  } catch (error) {
+    console.error("Backend API error:", error);
+    setTranscript("Sorry, I couldn't connect to the AI.");
   }
 }
 
@@ -209,37 +255,57 @@ function initSpeechRecognition() { /* Added for STT initialization */
   }
 
   recognition = new SpeechRecognition();
-  recognition.continuous = true; // CHANGED: Set to true for continuous listening until explicitly stopped
+  recognition.continuous = true; // Keep listening even after a pause
   recognition.lang = 'en-US';
-  recognition.interimResults = true; // Show interim results as user speaks
+  recognition.interimResults = true; // Show interim results
 
   recognition.onstart = () => {
     isListeningForSTT = true;
+    sttFinalTranscript = ''; // Reset transcript buffer on start
+    clearTimeout(sttPauseTimer); // Clear any lingering timers
     setTranscript('Listening...');
-    toggleMicButtonState(true); // Mic button active state
+    toggleMicButtonState(true);
   };
 
   recognition.onresult = (event) => {
+    // Clear the pause timer every time new results arrive
+    clearTimeout(sttPauseTimer);
+
     let interimTranscript = '';
-    let finalTranscript = '';
+    let finalTranscriptSinceLastResult = '';
+
     for (let i = event.resultIndex; i < event.results.length; ++i) {
       if (event.results[i].isFinal) {
-        finalTranscript += event.results[i][0].transcript;
+        finalTranscriptSinceLastResult += event.results[i][0].transcript;
       } else {
         interimTranscript += event.results[i][0].transcript;
       }
     }
-    setTranscript(finalTranscript || interimTranscript); // Display live or final transcript
 
-    // No manual recognition.stop() here as continuous is true.
-    // Recognition will continue until toggleSTTAndVisualizer is called to stop it.
+    // Append the newly finalized part to the full transcript
+    if (finalTranscriptSinceLastResult) {
+      sttFinalTranscript += finalTranscriptSinceLastResult + ' ';
+    }
+
+    // Update the display with the combination of final and interim transcripts
+    setTranscript(sttFinalTranscript + interimTranscript);
+
+    // Set a timer to send the text to the backend after a pause in speech
+    sttPauseTimer = setTimeout(() => {
+      const textToSend = sttFinalTranscript.trim();
+      if (textToSend) {
+        sendToBackend(textToSend);
+      }
+      sttFinalTranscript = ''; // Clear the buffer after sending
+    }, sttPauseDuration);
   };
 
   recognition.onerror = (event) => {
     console.error('Speech recognition error:', event.error);
+    clearTimeout(sttPauseTimer); // Clear timer on error
     isListeningForSTT = false;
-    toggleMicButtonState(false); // Reset button
-    stopVisualizer(); // Stop visualizer on STT error
+    toggleMicButtonState(false);
+    stopVisualizer();
 
     let errorMessage = "Speech input error. Please try again.";
     if (event.error === 'no-speech') {
@@ -247,16 +313,24 @@ function initSpeechRecognition() { /* Added for STT initialization */
     } else if (event.error === 'not-allowed') {
       errorMessage = "Microphone access denied. Please allow it in your browser settings.";
     }
-    setTranscript(errorMessage); // Use transcript div for error message
+    setTranscript(errorMessage);
   };
 
   recognition.onend = () => {
-    // This will only fire if recognition.stop() is called, or if there's a browser error/tab close.
-    // It handles the cleanup after a deliberate stop.
     isListeningForSTT = false;
-    setTranscript('Ready');
     toggleMicButtonState(false);
     stopVisualizer();
+    clearTimeout(sttPauseTimer);
+
+    // If there's a final bit of transcript that hasn't been sent, send it now.
+    const textToSend = sttFinalTranscript.trim();
+    if (textToSend) {
+      sendToBackend(textToSend);
+    } else {
+      // If no text was sent, revert to a ready state.
+      setTranscript('Ready');
+    }
+    sttFinalTranscript = ''; // Reset buffer
   };
 }
 
