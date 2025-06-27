@@ -89,15 +89,22 @@ main.error {
 
 /* Styling for the transcription display */
 #transcript {
-  position: fixed; /* Fixed position relative to viewport */
-  bottom: 35%; /* Positioned from the bottom */
-  left: 0; /* Align to the left edge */
-  width: 100%; /* Full width */
-  padding: 1em; /* Add some padding */
-  color: #fff; /* Explicitly set white color */
-  font-size: 1.5em; /* A bit larger font */
-  text-align: center; /* Ensure text is centered */
-  z-index: 200; /* Ensure it's above the visualizer and button */
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background for visibility */
-  pointer-events: none; /* Make sure it doesn't capture mouse events */
+    position: fixed;
+    bottom: 33%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 700px;
+    padding: 1.25em 2em;
+    color: #fff;
+    font-size: 1.0em;
+    line-height: 1.4;
+    text-align: center;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.65);
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    pointer-events: none;
+    word-break: break-word;
+    letter-spacing: 0.01em;
 }
