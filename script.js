@@ -328,7 +328,7 @@ function initSpeechRecognition() { /* Added for STT initialization */
       sendToBackend(textToSend);
     } else {
       // If no text was sent, revert to a ready state.
-      setTranscript('Ready');
+      setTranscript('Ready to answer.');
     }
     sttFinalTranscript = ''; // Reset buffer
   };
