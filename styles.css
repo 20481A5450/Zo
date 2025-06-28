@@ -60,7 +60,10 @@ button.active {
 
 /* Styling for the main visualizer area */
 main {
-  position: relative;
+  position: absolute; /* Changed for explicit positioning */
+  top: 35%; /* Position from the top */
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: flex; /* Use flexbox to arrange visual elements */
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
@@ -90,26 +93,26 @@ main.error {
 /* Styling for the transcription display */
 #transcript {
     position: fixed;
-    bottom: 10%; /* Moved lower to provide more space */
+    bottom: 15%; /* Positioned at the bottom center */
     left: 50%;
     transform: translateX(-50%);
     width: 80%;
     max-width: 700px;
-    max-height: 40vh; /* Set a max height to handle large text */
+    max-height: 25vh; /* Adjusted max height */
     overflow-y: auto; /* Enable scrolling for overflow */
-    padding: 1.25em 2em;
+    padding: 1em 1.5em;
     color: #fff;
-    font-size: 1.0em;
-    line-height: 1.6; /* Increased for better readability */
-    text-align: left; /* Better for large blocks of text */
+    font-size: 1.1em;
+    line-height: 1.5;
+    text-align: center; /* Centered text */
     z-index: 200;
-    background: rgba(0, 0, 0, 0.75); /* Darker for better contrast */
+    background: rgba(0, 0, 0, 0.75);
     border-radius: 12px;
     box-shadow: 0 4px 24px rgba(0,0,0,0.3);
-    pointer-events: auto; /* Changed to allow scrolling */
+    pointer-events: auto;
     word-break: break-word;
     letter-spacing: 0.01em;
-    transition: all 0.3s ease; /* Smooth transitions */
+    transition: all 0.3s ease;
 }
 
 /* Custom, modern scrollbar for the transcript section */

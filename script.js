@@ -32,11 +32,17 @@ const sttPauseDuration = 1500; // 1.5 seconds pause before sending to backend
 // --- UI Utility Functions ---
 
 /**
- * Updates the transcription display text. (Now also serves as status display)
+ * Updates the transcription display text, optionally adding a copy button for backend responses.
  * @param {string} text - The transcribed text or status message to display.
+ * @param {boolean} isBackendResponse - If true, a copy button will be added.
  */
 function setTranscript(text) {
-  transcriptDisplay.textContent = text;
+  // For simple status messages, just display the text.
+  const content = `<div class="transcript-text">${text}</div>`;
+  transcriptDisplay.innerHTML = content;
+
+  // Auto-scroll to the bottom to show the latest content.
+  transcriptDisplay.scrollTop = transcriptDisplay.scrollHeight;
 }
 
 /**
