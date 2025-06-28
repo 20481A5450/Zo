@@ -98,7 +98,6 @@ async function sendToBackend(text) {
   }
 
   setTranscript("Thinking..."); // Let the user know something is happening
-  speakText("Thinking..."); // Speak "Thinking..."
 
   try {
     const response = await fetch('https://shaikzo-zo.hf.space/query', {
@@ -363,19 +362,17 @@ function initSpeechRecognition() { /* Added for STT initialization */
 
   recognition.onend = () => {
     isListeningForSTT = false;
-    toggleMicButtonState(false);
-    stopVisualizer();
+    // Do not toggle UI on end to keep response visible and avoid resetting to start button
+    // toggleMicButtonState(false);
+    // stopVisualizer();
     clearTimeout(sttPauseTimer);
 
-    // If there's a final bit of transcript that hasn't been sent, send it now.
+    // Send any final text that hasn't been sent yet
     const textToSend = sttFinalTranscript.trim();
     if (textToSend) {
       sendToBackend(textToSend);
-    } else {
-      // If no text was sent, revert to a ready state.
-      setTranscript('Ready to answer.');
-      speakText('Ready to answer.'); // Speak ready message
     }
+
     sttFinalTranscript = ''; // Reset buffer
   };
 }
