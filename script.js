@@ -1,13 +1,13 @@
-// --- DOM Elements (Updated to reflect added IDs for easier access) ---
-const microphoneButton = document.getElementById('microphoneButton'); // Access the button by its new ID
-const transcriptDisplay = document.getElementById('transcript'); // Access the transcript div
-const visualMainElement = document.querySelector('main'); // The main container for the bars
+// --- DOM Elements ---
+const microphoneButton = document.getElementById('microphoneButton');
+const transcriptDisplay = document.getElementById('transcript');
+const visualMainElement = document.querySelector('main');
 
 // --- Web Audio API Variables for Visualizer ---
 let audioContext;
 let analyser;
 let mediaStreamSource;
-let visualElements; // Stores references to the created div elements for bars
+let visualElements;
 let visualValueCount;
 if (/Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent)) {
     // Mobile device detected
@@ -18,7 +18,7 @@ if (/Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigato
     visualValueCount = 32;
 }
 
-// --- Web Speech API Variables for STT ---
+// --- Web Speech API Variables for STT & TTS ---
 let recognition; // SpeechRecognition object for STT
 
 // --- State Management ---
@@ -34,7 +34,6 @@ const sttPauseDuration = 1500; // 1.5 seconds pause before sending to backend
 /**
  * Updates the transcription display text, optionally adding a copy button for backend responses.
  * @param {string} text - The transcribed text or status message to display.
- * @param {boolean} isBackendResponse - If true, a copy button will be added.
  */
 function setTranscript(text) {
   // For simple status messages, just display the text.
@@ -59,6 +58,33 @@ function toggleMicButtonState(active) {
   }
 }
 
+// --- Text-to-Speech (TTS) Functionality ---
+/**
+ * Speaks the given text aloud using the Web Speech API.
+ * @param {string} text - The text to be spoken.
+ */
+function speakText(text) {
+    if ('speechSynthesis' in window) {
+        // Cancel any ongoing speech before starting a new one
+        if (speechSynthesis.speaking) {
+            speechSynthesis.cancel();
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US'; // Set the language
+        utterance.pitch = 1;      // Default pitch
+        utterance.rate = 1;       // Default rate
+
+        // Optional: You can choose a specific voice if available
+        // const voices = speechSynthesis.getVoices();
+        // utterance.voice = voices.find(voice => voice.name === 'Google US English'); // Example voice
+
+        speechSynthesis.speak(utterance);
+    } else {
+        console.warn("Text-to-Speech not supported in this browser.");
+    }
+}
+
 
 // --- Backend API Communication ---
 
@@ -72,6 +98,7 @@ async function sendToBackend(text) {
   }
 
   setTranscript("Thinking..."); // Let the user know something is happening
+  speakText("Thinking..."); // Speak "Thinking..."
 
   try {
     const response = await fetch('https://shaikzo-zo.hf.space/query', {
@@ -93,13 +120,16 @@ async function sendToBackend(text) {
     // Assuming the API returns a dictionary with a 'response' key
     if (result && result.response) {
       setTranscript(result.response); // Display the AI's response
+      speakText(result.response); // Speak the AI's response
     } else {
         setTranscript("Sorry, I didn't get a valid response.");
+        speakText("Sorry, I didn't get a valid response.");
     }
 
   } catch (error) {
     console.error("Backend API error:", error);
     setTranscript("Sorry, I couldn't connect to the AI.");
+    speakText("Sorry, I couldn't connect to the AI.");
   }
 }
 
@@ -161,6 +191,7 @@ const processVisualizerError = (error) => { /* Renamed for clarity */
   isVisualizerActive = false;
   toggleMicButtonState(false);
   setTranscript('Mic Access Denied'); // Use transcript div for status
+  speakText('Mic Access Denied'); // Speak error message
 };
 
 /**
@@ -256,6 +287,7 @@ function initSpeechRecognition() { /* Added for STT initialization */
   if (!SpeechRecognition) {
     console.warn("Speech Recognition not supported by this browser.");
     setTranscript("Browser doesn't support STT."); // Use transcript div for status
+    speakText("Browser doesn't support speech to text."); // Speak error
     microphoneButton.disabled = true;
     return;
   }
@@ -269,6 +301,12 @@ function initSpeechRecognition() { /* Added for STT initialization */
     isListeningForSTT = true;
     sttFinalTranscript = ''; // Reset transcript buffer on start
     clearTimeout(sttPauseTimer); // Clear any lingering timers
+    
+    // Stop any ongoing TTS before starting STT
+    if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+    }
+
     setTranscript('Listening...');
     toggleMicButtonState(true);
   };
@@ -320,6 +358,7 @@ function initSpeechRecognition() { /* Added for STT initialization */
       errorMessage = "Microphone access denied. Please allow it in your browser settings.";
     }
     setTranscript(errorMessage);
+    speakText(errorMessage); // Speak error message
   };
 
   recognition.onend = () => {
@@ -335,6 +374,7 @@ function initSpeechRecognition() { /* Added for STT initialization */
     } else {
       // If no text was sent, revert to a ready state.
       setTranscript('Ready to answer.');
+      speakText('Ready to answer.'); // Speak ready message
     }
     sttFinalTranscript = ''; // Reset buffer
   };
@@ -346,9 +386,8 @@ function initSpeechRecognition() { /* Added for STT initialization */
  * Toggles the microphone and STT/Visualizer on/off.
  * This function is now directly called by the button's onclick event.
  */
-function toggleSTTAndVisualizer() { // Renamed from init to match onclick, and updated logic
+function toggleSTTAndVisualizer() {
   if (isListeningForSTT) {
-    // If currently listening, stop STT and visualizer
     recognition.stop(); // This will trigger recognition.onend, which handles cleanup
   } else {
     // If not listening, start STT and Visualizer
@@ -362,12 +401,8 @@ function toggleSTTAndVisualizer() { // Renamed from init to match onclick, and u
 // --- Initial Setup on Window Load ---
 
 window.addEventListener('load', () => {
-  // We defer the creation of bars until startVisualizer is called,
-  // to keep the initial "start" button visible as per original code.
-  // The visualMainElement will contain the button initially.
-
-  // Initialize Web Speech Recognition API
-  initSpeechRecognition();
+  initSpeechRecognition(); // Initialize STT
 
   setTranscript('Click "start" to talk.'); // Initial status message
+  speakText('Click start to talk.'); // Speak initial message
 });
