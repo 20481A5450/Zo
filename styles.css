@@ -98,7 +98,7 @@ main.error {
     transform: translateX(-50%);
     width: 80%;
     max-width: 700px;
-    max-height: 25vh; /* Adjusted max height */
+    max-height: 50vh; /* Adjusted max height */
     overflow-y: auto; /* Enable scrolling for overflow */
     padding: 1em 1.5em;
     color: #fff;
