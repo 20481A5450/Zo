@@ -344,20 +344,33 @@ function initSpeechRecognition() { /* Added for STT initialization */
   };
 
   recognition.onerror = (event) => {
-    console.error('Speech recognition error:', event.error);
+    console.error('Speech recognition error:', event);
     clearTimeout(sttPauseTimer); // Clear timer on error
     isListeningForSTT = false;
     toggleMicButtonState(false);
     stopVisualizer();
 
-    let errorMessage = "Speech input error. Please try again.";
+    let errorMessage = `Speech input error (${event.error})`;
+    if (event.message) {
+      errorMessage += `: ${event.message}`;
+    }
     if (event.error === 'no-speech') {
       errorMessage = "I didn't hear anything. Please try again.";
     } else if (event.error === 'not-allowed') {
       errorMessage = "Microphone access denied. Please allow it in your browser settings.";
+    } else if (event.error === 'network') {
+      errorMessage +=
+        '<br><br><b>Possible causes:</b>' +
+        '<ul>' +
+        '<li>SpeechRecognition API requires access to Google servers (Chrome/Edge).</li>' +
+        '<li>Check if you are behind a firewall, VPN, or proxy that blocks Google services.</li>' +
+        '<li>Try disabling VPN/proxy or switching networks.</li>' +
+        '<li>This feature may not work in some regions or on some networks.</li>' +
+        '<li>Try reloading the page or restarting your browser.</li>' +
+        '</ul>';
     }
     setTranscript(errorMessage);
-    speakText(errorMessage); // Speak error message
+    speakText('Speech input error. Please check the transcript for details.');
   };
 
   recognition.onend = () => {
